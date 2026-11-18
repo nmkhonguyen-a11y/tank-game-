@@ -12,12 +12,14 @@ const ORIGINS = (process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()
 const GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 const COUNTDOWN_MS = 5000, RESET_MS = 12000, MAX_FRAME = 256 * 1024;
 const hub = require('./hub.js').createHub();
+const accounts = require('./accounts.js'); // tài khoản · ID · tặng quà (/api/*)
 const rooms = hub.rooms, conns = hub.conns;
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'application/javascript; charset=utf-8' };
-const STATIC_FILES = ['index.html', 'online.js', 'hub.js', 'peerjs.min.js'];
+const STATIC_FILES = ['index.html', 'online.js', 'hub.js', 'account-ui.js', 'peerjs.min.js'];
 
 /* ---------------- HTTP ---------------- */
 const server = http.createServer((req, res) => {
+  if (req.url.startsWith('/api/')) { accounts.handle(req, res, req.url).catch(() => { try { res.writeHead(500); res.end(); } catch (e) { } }); return; }
   const u = req.url.split('?')[0];
   if (u === '/health') { res.writeHead(200, { 'Content-Type': 'application/json' }); return res.end(JSON.stringify({ ok: true, rooms: rooms.size, players: conns.size })); }
   const name = u === '/' ? 'index.html' : u.slice(1);

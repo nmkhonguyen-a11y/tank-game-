@@ -59,6 +59,7 @@ h1{margin:0;font-size:clamp(26px,6vw,52px);background:linear-gradient(90deg,#22d
   <div id="tmLvG" style="display:grid;grid-template-columns:repeat(6,1fr);gap:5px"></div>
   <button style="padding:9px;background:#be185d" onclick="startTeam()">▶ BẮT ĐẦU CHIẾN ĐẤU</button>
  </div>
+ <button id="accBtn" style="width:280px;padding:12px;font-size:16px;background:#0369a1" onclick="TWE_ACC.open()">👤 TÀI KHOẢN · ID · TẶNG QUÀ</button>
  <button style="width:280px;padding:12px;font-size:16px;background:#7c3aed" onclick="TWE_ONLINE.open()">🌐 CHƠI ONLINE (4 chế độ)</button>
  <button style="width:280px;padding:12px;font-size:16px;background:#0f766e" onclick="document.getElementById('simMenu').classList.toggle('hidden')">🎥 MÔ PHỎNG ▾</button>
  <div id="simMenu" class="hidden" style="display:flex;flex-direction:column;gap:6px;width:280px">
@@ -69,10 +70,7 @@ h1{margin:0;font-size:clamp(26px,6vw,52px);background:linear-gradient(90deg,#22d
  <button class="gold" style="width:280px" onclick="togShop()">🛒 CỬA HÀNG XE TĂNG</button>
  <button class="gold" style="width:280px;background:#7c3aed;color:#fff" onclick="togQ()">🎯 NHIỆM VỤ & RƯƠNG</button>
  <div style="display:flex;gap:6px"><input id="adm" placeholder="Mã bí mật (7X3ADMIN)"><button class="gold" onclick="adminCode()">MỞ</button></div>
- <!--EXP_START-->
- <button style="width:280px;padding:12px;font-size:15px;background:#1d4ed8" onclick="downloadGithub()">📦 TẢI FILE ĐƯA LÊN GITHUB (.ZIP)</button>
- <div class="mu" style="max-width:420px;font-size:11px">Tải về 1 file .zip gồm <b>index.html</b> + <b>README.md</b> để đưa lên GitHub (bật GitHub Pages là chơi được ngay).</div>
- <!--EXP_END-->
+ 
  <div class="mu" style="max-width:640px;font-size:12px">WASD/Mũi tên: lái · Chuột: ngắm · Chuột trái/Space: bắn · U: nâng cấp · G: cửa hàng · F: tự bắn · C: lật 180° · R: tự xoay<br>Chết sẽ mất 75% cấp độ. Esc khi đang chơi: tự lưu và về sảnh. PvP/4 Team không đổi tiến trình đã lưu. 4 Team: mỗi đội 1 góc, đứng trong vùng an toàn thì không bị trúng đòn.</div></div>
 
 <div id="qpanel" class="ov hidden" style="z-index:30"></div>
@@ -85,7 +83,7 @@ h1{margin:0;font-size:clamp(26px,6vw,52px);background:linear-gradient(90deg,#22d
 
 <script>
 const $=id=>document.getElementById(id),cv=$('g'),ctx=cv.getContext('2d'),mc=$('mm').getContext('2d');
-let MAP=4000;const BIGMAP=8000,KEY='tank7x3_save_v1',rnd=(a,b)=>a+Math.random()*(b-a);
+let MAP=4000;let KEY=KEY0;const BIGMAP=8000,KEY0='tank7x3_save_v1',rnd=(a,b)=>a+Math.random()*(b-a);
 /* Bảng EXP theo bậc: 1→25 +150/cấp · 25→50 +300 · 50→100 +5.000 · 100→200 +10.000 · 200→500 +25.000
    500→1000 +37.500 · 1000→3000 +55.000 · 3000→10000 +100.000 · trên 10.000 +125.000 */
 const EXPB=[[25,150],[50,300],[100,5000],[200,10000],[500,25000],[1000,37500],[3000,55000],[10000,100000],[1e9,125000]];
@@ -1981,17 +1979,16 @@ menuInfo();
       sáp nhập vào đội vừa phá cờ; bấm T để ra lệnh cho cả đội tấn công cờ địch. */
 
 // ============ 1) XE TĂNG DÙNG CODE ============
-(function voltTank(){
-  if(D.voltDone)return;
-  const mk=(k,n)=>Array.from({length:n},()=>({k,a:0,o:0,p:0,wm:1}));
-  const bars=[...mk('e',10),...mk('en',5),...mk('r',8)];
-  const sp={gid:'VOLT',name:'VOLT LÃNH CHÚA',color:'#67e8f9',shape:'o',hp:12000,speed:5.2,body:160,
-    reload:6,dmg:220,ps:30,pr:11,b:bars,r:[]};
-  D.garage=[gCopy(sp)];
-  D.custom=gCopy(sp);
-  D.voltDone=1;
-  regCustom();
-  D.customSel=true;D.type='custom';
+/* Không còn tự tặng xe "VOLT LÃNH CHÚA": người chơi mới dùng xe tăng mặc định (basic).
+   Dọn xe VOLT đã bị tự cấp trước đây (1 lần), chỉ khi nó đang là xe tuỳ chỉnh được cấp tự động. */
+(function noVolt(){
+  if(!D.voltDone||D.voltCleaned)return;
+  D.voltCleaned=1;
+  try{
+    D.garage=(D.garage||[]).filter(g=>g.gid!=='VOLT');
+    if(D.custom&&D.custom.gid==='VOLT'){D.custom=null;D.customSel=false;delete S.custom}
+    if(D.type==='custom'&&!D.customSel)D.type='basic';
+  }catch(e){}
   save();
 })();
 
@@ -2115,6 +2112,6 @@ addEventListener('keydown',e=>{
   if(tg)setAtk(tg);
 },true);
 </script>
-<script src="hub.js"></script><script src="online.js"></script>
-<script src="/github-export.js"></script><script src="/net.js"></script>
+<script src="hub.js"></script><script src="online.js"></script><script src="account-ui.js"></script>
+<script src="/net.js"></script>
 </body></html>
